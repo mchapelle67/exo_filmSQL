@@ -1,0 +1,89 @@
+-- afficher infos films
+SELECT titre, annee_sortie,  DATE_FORMAT(SEC_TO_TIME(duree*60), '%H:%i') AS duree_formater, nom, prenom
+FROM film
+INNER JOIN realisateur ON film.id_realisateur = realisateur.id_realisateur
+INNER JOIN personne ON realisateur.id_personne = personne.id_personne;
+
+-- durée superieur à 2h15 + tri décroissant 
+SELECT titre, annee_sortie, DATE_FORMAT(SEC_TO_TIME(duree*60), '%H:%i') as duree_formater, nom, prenom
+FROM film
+INNER JOIN realisateur ON film.id_realisateur = realisateur.id_realisateur
+INNER JOIN personne ON realisateur.id_personne = personne.id_personne
+WHERE duree > 135 
+ORDER BY duree DESC;
+
+-- films par realisateur
+SELECT titre, annee_sortie, nom, prenom
+FROM film
+INNER JOIN realisateur ON film.id_realisateur = realisateur.id_realisateur
+INNER JOIN personne ON realisateur.id_personne = personne.id_personne
+WHERE realisateur.id_realisateur = :id;
+
+-- nombre de films par genre 
+SELECT COUNT(film_genre.id_genre) AS nb_films, nom_genre
+FROM film_genre
+INNER JOIN genre ON film_genre.id_genre = genre.id_genre
+GROUP BY film_genre.id_genre
+ORDER BY nb_films DESC;
+
+-- nombre de films par réalisateur 
+SELECT COUNT(id_film) AS nb_films, prenom, nom
+FROM film
+INNER JOIN realisateur ON film.id_realisateur = realisateur.id_realisateur
+INNER JOIN personne ON realisateur.id_personne = personne.id_personne
+GROUP BY film.id_realisateur
+ORDER BY nb_films DESC;
+
+-- casting d'un film 
+SELECT titre, prenom, nom, sexe
+FROM film_acteur_role
+INNER JOIN film ON film_acteur_role.id_film = film.id_film
+INNER JOIN acteur ON film_acteur_role.id_acteur = acteur.id_acteur
+INNER JOIN personne ON acteur.id_personne = personne.id_personne
+WHERE film.id_film = 5;
+
+-- filmographie d'un acteur 
+SELECT 
+CONCAT(prenom, " ", nom) AS fullName,
+nom_role, 
+titre, annee_sortie
+FROM film_acteur_role
+INNER JOIN acteur ON film_acteur_role.id_acteur = acteur.id_acteur 
+INNER JOIN personne ON acteur.id_personne = personne.id_personne 
+INNER JOIN role ON film_acteur_role.id_role = role.id_role
+INNER JOIN film ON film_acteur_role.id_film = film.id_film
+WHERE acteur.id_acteur = 1
+ORDER BY annee_sortie DESC;
+
+-- realisateur qui est aussi acteur 
+SELECT 
+nom, prenom
+FROM personne
+INNER JOIN acteur ON personne.id_personne = acteur.id_personne
+INNER JOIN realisateur ON personne.id_personne = realisateur.id_personne
+
+-- film sortis il y a - 5 ans 
+SELECT titre, annee_sortie
+FROM film
+WHERE YEAR(NOW()) - annee_sortie < 5
+ORDER BY annee_sortie DESC;
+
+-- nombre d'homme et de femme acteurs 
+SELECT COUNT(sexe) AS nb_par_sexes, sexe
+FROM acteur 
+INNER JOIN personne ON acteur.id_personne = personne.id_personne
+GROUP BY sexe;
+
+-- nombre d'acteur ayant 50 ans ou +
+SELECT prenom, nom, YEAR(NOW()) - YEAR(dateDeNaissance) AS age
+FROM acteur 
+INNER JOIN personne ON acteur.id_personne = personne.id_personne
+WHERE YEAR(NOW()) - YEAR(dateDeNaissance) >= 50;
+
+-- acteur avec + de 3 films 
+SELECT prenom, nom, COUNT(id_film) AS nb_films
+FROM acteur
+INNER JOIN personne ON acteur.id_personne = personne.id_personne
+INNER JOIN film_acteur_role ON acteur.id_acteur = film_acteur_role.id_acteur
+GROUP BY acteur.id_acteur
+HAVING COUNT(id_film) >= 3
